@@ -64,7 +64,10 @@ keep levels even so we do not look like a spam bot.
 
 
 app.get('/', function(req, res){
-  twitterAuth.api.search.tweets('problem', CONFIG.twitter.token, CONFIG.twitter.secret, function(error, data) {
+  twitterAuth.api.search.tweets({
+  	q: 'beagle'
+  }, { token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+  function(error, data) {
   	res.send(data);
   });
 });
