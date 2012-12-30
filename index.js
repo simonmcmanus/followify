@@ -89,12 +89,12 @@ app.get('/unfollow', function(req, res){
 
 	// this has a serios effect on rate limits.
 	twitterAuth.method('friends/list', 'GET', {
-		
+		cursor: -2
 	}, {
 			token: CONFIG.twitter.token, 
 			secret: CONFIG.twitter.secret
 		}, function(error, data) {
-		console.log(error, data);
+		console.log(data);
 		var ids = data.data.users.map(function(a) {
 			return a.id
 		});	
@@ -113,11 +113,10 @@ app.get('/unfollow', function(req, res){
 						//out.push('unfollowed ' +d.data[c].screen_name +' </br>' );
 					});
 				}else {
-					console.log('Keep: '+d.data[c].screen_name);
+					//console.log('Keep: '+d.data[c].screen_name);
 				} 
 			}
 		});
-		console.log(ids);
 		res.send('done');
 //		res.send(arguments);
 	});

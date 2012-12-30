@@ -135,9 +135,16 @@ module.exports = function(options) {
       self.consumer.get(url, oauthToken, oauthTokenSecret, function (error, data, response) {
         if(response && response.headers) {
           // this info should get sent back with each request.
-          var limit = response.headers['x-rate-limit-remaining'];
-          if(limit === "0") {  //rate limit has not been reached.
-            callback({limitReached: true, auth: data}, null);
+          var limits = {
+            remaining: response.headers['x-rate-limit-remaining'],
+            reset: response.headers['x-rate-limit-reset']
+          }
+          if(limits.remaining === "0") {  //rate limit has not been reached.
+            callback({
+              limitReached: true, 
+              limits: limits,
+              auth: data
+            }, null);
             return;
           }
         }
@@ -157,7 +164,7 @@ module.exports = function(options) {
             datastore.expire(key, self.cacheDuration);
           }
           if(callback) {
-            callback(null, data, limit);
+            callback(null, data, limits);
           }
         } catch(error) {
           // leaving this in  so we can keep an eye of invalid json being returned.
@@ -224,9 +231,9 @@ module.exports = function(options) {
      * @param  {Function} callback         Called with the mentions. (error, data)
      */
     self.retweets = function(oauthToken, oauthTokenSecret, sinceId, callback) {
-      var processData = function(error, data, limit) {
+      var processData = function(error, data, limits) {
         callback(error, {
-          limit: limit,
+          limit: limits,
           tweets: data
         });
       };
@@ -245,16 +252,15 @@ module.exports = function(options) {
    * @param  {Function} callback Called once complete
    */
   self.method = function(funct, method, params, oauth, callback) {
-    var processData = function(error, data, limit) {
+    var processData = function(error, data, limits) {
       callback(error, {
-        limit: limit,
+        limit: limits,
         data: data
       });
     };
     if(method === 'GET'){
       self.fetch('https://api.twitter.com/1.1/'+funct+'.json?'+qs.stringify(params), oauth.token, oauth.secret, processData);
     }else if(method === 'POST') {
-      console.log('https://api.twitter.com/1.1/'+funct+'.json');
       self.post('https://api.twitter.com/1.1/'+funct+'.json', oauth.token, oauth.secret, params, processData);
     }else {
       console.log('Only GET and POST supported.');
@@ -276,7 +282,7 @@ module.exports = function(options) {
   self.user = function(handle, oauthToken, oauthTokenSecret, callback) {
     var processData = function(error, data, limit) {
       callback(error, {
-        limit: limit,
+        limit: limits,
         user: data
       });
     };
@@ -297,7 +303,7 @@ module.exports = function(options) {
   self.user = function(handle, oauthToken, oauthTokenSecret, callback) {
     var processData = function(error, data, limit) {
       callback(error, {
-        limit: limit,
+        limit: limits,
         user: data
       });
     };
@@ -317,7 +323,7 @@ module.exports = function(options) {
   self.verify = function(oauthToken, oauthTokenSecret, callback) {
     var processData = function(error, data, limit) {
       callback(error, {
-        limit: limit,
+        limit: limits,
         user: data
       });
     };
@@ -357,7 +363,7 @@ module.exports = function(options) {
           processedTweets.push(processTweet(tweets[c]));
         }
         callback(null, {
-          limit: limit,
+          limit: limits,
           tweets: processedTweets.reverse()
         }, limit);
       }else {
