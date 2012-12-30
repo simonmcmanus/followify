@@ -52,9 +52,10 @@ twitterAuth = require('./tauth.js')(config);
 var app = express();
 
 app.configure(function(){
-  app.set('port', 8001);
+  app.set('port', process.env.PORT || 8001);
 });
 
+ 
 app.use(express.cookieParser());
 app.use(express.session({ secret: 'secret key' }));
 app.use(express.bodyParser());
