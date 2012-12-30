@@ -1,0 +1,11 @@
+{
+  "name": "followify",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "~2.5.11"
+  },
+  "engines": {
+    "node": "0.8.12",
+    "npm": "1.1.x"
+  }
+}

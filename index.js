@@ -21,41 +21,32 @@ var config = {
 
 twitterAuth = require('./tauth.js')(config);
 
-	twitterAuth.api.friendships.create(
-		{ screen_name: '8892842', follow: true }, 
-		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
-		function(error, data) {
-			var d= JSON.parse(data.data);
-			console.log('done1', error, data);
-		});
-	return;
 
-var stream = require('./stream.js')([
-    'ignoring my complaint',
-    'ignoring my emails',
-    'problem shared',
-    'my complaint',
-    'Im going to complain',
-    'I want to complain',
-    'i intend to complain',
-    'expect my complaint',
-    'investigate my complaint',
-    'official complaint',
-    'response to my complaint',
-    'reply to my complaint',
-    'ignoring me regarding complaint',
-    'complaint escalated'
-    //'stop ignoring me'
-], function(error, tweet) {
-	console.log('follow', tweet.user.id);
-	twitterAuth.api.friendships.create(
-		{ screen_name: tweet.user.id_str, follow: true }, 
-		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
-		function(error, data) {
-				var d= JSON.parse(data.data);
-			console.log('done1', d.id, d.screen_name, d.following);
-		});
-});
+// var stream = require('./stream.js')([
+//     'ignoring my complaint',
+//     'ignoring my emails',
+//     'problem shared',
+//     'my complaint',
+//     'Im going to complain',
+//     'I want to complain',
+//     'i intend to complain',
+//     'expect my complaint',
+//     'investigate my complaint',
+//     'official complaint',
+//     'response to my complaint',
+//     'reply to my complaint',
+//     'ignoring me regarding complaint',
+//     'complaint escalated'
+//     //'stop ignoring me'
+// ], function(error, tweet) {
+// 	console.log('follow', tweet.user);
+// 	twitterAuth.api.friendships.create(
+// 		{ screen_name: tweet.user.screen_name, follow: true }, 
+// 		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+// 		function(error, data) {
+// 			console.log('done1');
+// 	});
+// });
 
 
 var app = express();
@@ -95,23 +86,39 @@ app.get('/', function(req, res){
 });
 
 app.get('/unfollow', function(req, res){
-	twitterAuth.method('friends/list', 'GET', {}, {token: CONFIG.twitter.token, secret: CONFIG.twitter.secret}, function(error, data) {
+
+	// this has a serios effect on rate limits.
+	twitterAuth.method('friends/list', 'GET', {
+		
+	}, {
+			token: CONFIG.twitter.token, 
+			secret: CONFIG.twitter.secret
+		}, function(error, data) {
+		console.log(error, data);
 		var ids = data.data.users.map(function(a) {
 			return a.id
 		});	
 		twitterAuth.method('friendships/lookup', 'GET', {user_id: ids.join(',')}, {token: CONFIG.twitter.token, secret: CONFIG.twitter.secret}, function(e, d) {
-			console.log(arguments);
-			res.send(d.data);
+			var out = [];
 			var c = d.data.length;
 			while(c--) {
 				if(d.data[c].connections.join('').indexOf('followed_by') < 0) { // they not following us.
 					console.log('Unfollow: '+d.data[c].screen_name);
+
+					twitterAuth.api.friendships.destroy(
+						{ screen_name: d.data[c].screen_name, follow: true }, 
+						{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+						function(error, data) {
+							console.log('done1');	
+						//out.push('unfollowed ' +d.data[c].screen_name +' </br>' );
+					});
 				}else {
 					console.log('Keep: '+d.data[c].screen_name);
 				} 
 			}
 		});
 		console.log(ids);
+		res.send('done');
 //		res.send(arguments);
 	});
 
