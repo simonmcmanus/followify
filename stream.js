@@ -24,9 +24,7 @@ module.exports = function(searches, callback) {
         console.log('in try');
         var tweet = JSON.parse(chunk);  
         callback(null, tweet);
-        console.log(tweet.text);  
       }catch(e) {
-        console.log('ERROR', e, chunk);
         cache = chunk;
       }
     });  

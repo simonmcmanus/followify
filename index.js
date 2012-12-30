@@ -9,6 +9,16 @@ var express = require('express');
 var CONFIG = require('config');
 
 
+if (process.env.REDISTOGO_URL) {
+	var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+	var redis = require("redis").createClient(rtg.port, rtg.hostname);
+	redis.auth(rtg.auth.split(":")[1]);
+} else {
+	var redis = require("redis").createClient();
+}
+
+
+
 var config = {
         consumerKey: "sJaEIiV4X014iIC6uvzKDA", /* per appications - manage apps here: https://dev.twitter.com/apps */
      consumerSecret: "40wRAIu9a9bgAKWWltTP7NutSZxEMsPZJ5UhTZitmgw", /* per appications - manage apps here: https://dev.twitter.com/apps */
@@ -22,31 +32,35 @@ var config = {
 twitterAuth = require('./tauth.js')(config);
 
 
-// var stream = require('./stream.js')([
-//     'ignoring my complaint',
-//     'ignoring my emails',
-//     'problem shared',
-//     'my complaint',
-//     'Im going to complain',
-//     'I want to complain',
-//     'i intend to complain',
-//     'expect my complaint',
-//     'investigate my complaint',
-//     'official complaint',
-//     'response to my complaint',
-//     'reply to my complaint',
-//     'ignoring me regarding complaint',
-//     'complaint escalated'
-//     //'stop ignoring me'
-// ], function(error, tweet) {
-// 	console.log('follow', tweet.user);
-// 	twitterAuth.api.friendships.create(
-// 		{ screen_name: tweet.user.screen_name, follow: true }, 
-// 		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
-// 		function(error, data) {
-// 			console.log('done1');
-// 	});
-// });
+var stream = require('./stream.js')([
+    'ignoring my complaint',
+    'ignoring my emails',
+    'problem shared',
+    'my complaint',
+    'Im going to complain',
+    'I want to complain',
+    'i intend to complain',
+    'expect my complaint',
+    'investigate my complaint',
+    'official complaint',
+    'response to my complaint',
+    'reply to my complaint',
+    'ignoring me regarding complaint',
+    'complaint escalated'
+], function(error, tweet) {
+
+	setTimeout(function() {
+		console.log('follow', tweet.user.screen_name + ' - ' + tweet.text);
+		redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
+		twitterAuth.api.friendships.create(
+			{ screen_name: tweet.user.screen_name, follow: true }, 
+			{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+			function(error, data) {
+				console.log('done1');
+		});
+	}, 3000);
+
+});
 
 
 var app = express();
@@ -130,9 +144,11 @@ app.get('/follow', function(req, res){
   	var c = tweets.length;
   	var  out = [];
   	while(c--) {
-		twitterAuth.follow(tweets[c].user.id, CONFIG.twitter.token, CONFIG.twitter.secret, function(err, data) {
-			out.push(data);
-	  	});
+
+  		redis.hset('user:'+tweets[c].user.id, 'followed', +new Date());
+		// twitterAuth.follow(tweets[c].user.id, CONFIG.twitter.token, CONFIG.twitter.secret, function(err, data) {
+		// 	out.push(data);
+	 //  	});
   	}
     res.send(out.join(' '));
   });
