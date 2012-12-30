@@ -35,29 +35,24 @@ twitterAuth = require('./tauth.js')(config);
 var stream = require('./stream.js')([
     'ignoring my complaint',
     'ignoring my emails',
-    'problem shared',
-    'my complaint',
-    'Im going to complain',
-    'I want to complain',
     'i intend to complain',
-    'expect my complaint',
     'investigate my complaint',
     'official complaint',
     'response to my complaint',
+    'respond to my complaint',
     'reply to my complaint',
     'ignoring me regarding complaint',
     'complaint escalated'
 ], function(error, tweet) {
-
-	setTimeout(function() {
-		console.log('follow', tweet.user.screen_name + ' - ' + tweet.text);
-//		redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
-		// twitterAuth.api.friendships.create(
-		// 	{ screen_name: tweet.user.screen_name, follow: true }, 
-		// 	{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
-		// 	function(error, data) {
-		// 		console.log('done1');
-		// });
+	console.log('follow', tweet.user.screen_name + ' - ' + tweet.text);
+	setTimeout(function() {	
+		redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
+		twitterAuth.api.friendships.create(
+			{ screen_name: tweet.user.screen_name, follow: true }, 
+			{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+			function(error, data) {
+				console.log('done1');
+		});
 	}, 3000);
 
 });
