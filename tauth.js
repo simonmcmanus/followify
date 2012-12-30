@@ -182,12 +182,10 @@ module.exports = function(options) {
   /*
     Handle Post request
    */
+  
   self.post =  function(url, oauthToken, oauthTokenSecret, body, callback) {
-    var type = 'json';
-    self.consumer.post(url, oauthToken, oauthTokenSecret, body, type, function (error, data, response) {
-      if(response && response.headers) {};
-      // todo - handle this.
-      callback(null, data);
+    self.consumer.post(url, oauthToken, oauthTokenSecret, body, 'json', function (error, data, response) {
+      callback(error, data);
     });
   };
 
@@ -254,10 +252,10 @@ module.exports = function(options) {
       });
     };
     if(method === 'GET'){
-      console.log('https://api.twitter.com/1.1/'+funct+'.json?'+qs.stringify(params));
       self.fetch('https://api.twitter.com/1.1/'+funct+'.json?'+qs.stringify(params), oauth.token, oauth.secret, processData);
     }else if(method === 'POST') {
-      self.post('https://api.twitter.com/1.1/'+funct+'.json?'+qs.stringify(params), oauth.token, oauth.secret, processData);
+      console.log('https://api.twitter.com/1.1/'+funct+'.json');
+      self.post('https://api.twitter.com/1.1/'+funct+'.json', oauth.token, oauth.secret, params, processData);
     }else {
       console.log('Only GET and POST supported.');
     }
@@ -444,30 +442,42 @@ module.exports = function(options) {
     self.method(func, supported[func].method, params, oauth, callback);
   };
 
+
+
+var addApiMethod = function(key, api) {
+  var items = key.split('/');
+  for(b = 0; b < items.length; b++ ){
+    if(!current){ // api is not defined.
+      if(!api[items[b]]){
+        api[items[b]] = {}; 
+      }
+      var current = api[items[b]];
+    }else { // api is defined and current set
+      if(!current[items[b]]){
+        if(b === items.length-1) { // its the last item from the / so much be function.
+          current[items[b]] = handleRequest.bind(this, key)
+        }else {
+          current[items[b]] = {};
+        }       
+      }
+      current = current[items[b]];
+    }
+  }
+  return api;
+};
+
+
+
   /**
    * Takes the supported object and builds the api object from it. 
    * @param  {Object} supported [description]
    * @return {Object}           The API with methods ready to use.
    */
   var buildApi = function(supported) {
-    console.log('IN BUILD API');
     var api = {};
     for(func in supported) {
-      console.log('func', func);
-      var items = func.split('/');
-      var current = null;
-      for(b = 0; b < items.length; b++ ){
-        var key = items.slice(0, b+1).join('.');
-        if(!current){ // new function.
-          api[items[b]] = handleRequest.bind(this, func);
-          current = api[items[b]];
-        }else { // api is defined and current set
-          current[items[b]] = handleRequest.bind(this, func);;
-          current = current[items[b]];
-        }
-      }
-    }
-
+      api = addApiMethod(func, api);
+    }     
     return api;
   };
 

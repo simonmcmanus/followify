@@ -3,22 +3,7 @@ var http = require('http');
 var path = require('path');
 
 
-var stream = require('./stream.js')([
-    'ignoring my complaint',
-    'ignoring my emails',
-    'problem shared',
-    'my complaint',
-    'Im going to complain',
-    'I want to complain',
-    'i intend to complain',
-    'expect my complaint',
-    'investigate my complaint',
-    'official complaint',
-    'response to my complaint',
-    'reply to my complaint',
-    'ignoring me regarding complaint',
-    'stop ignoring me'
-]);
+
 var express = require('express');
 
 var CONFIG = require('config');
@@ -35,6 +20,43 @@ var config = {
 };
 
 twitterAuth = require('./tauth.js')(config);
+
+	twitterAuth.api.friendships.create(
+		{ screen_name: '8892842', follow: true }, 
+		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+		function(error, data) {
+			var d= JSON.parse(data.data);
+			console.log('done1', error, data);
+		});
+	return;
+
+var stream = require('./stream.js')([
+    'ignoring my complaint',
+    'ignoring my emails',
+    'problem shared',
+    'my complaint',
+    'Im going to complain',
+    'I want to complain',
+    'i intend to complain',
+    'expect my complaint',
+    'investigate my complaint',
+    'official complaint',
+    'response to my complaint',
+    'reply to my complaint',
+    'ignoring me regarding complaint',
+    'complaint escalated'
+    //'stop ignoring me'
+], function(error, tweet) {
+	console.log('follow', tweet.user.id);
+	twitterAuth.api.friendships.create(
+		{ screen_name: tweet.user.id_str, follow: true }, 
+		{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+		function(error, data) {
+				var d= JSON.parse(data.data);
+			console.log('done1', d.id, d.screen_name, d.following);
+		});
+});
+
 
 var app = express();
 
@@ -108,6 +130,8 @@ app.get('/follow', function(req, res){
     res.send(out.join(' '));
   });
 });
+
+
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));

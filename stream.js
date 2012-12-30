@@ -3,7 +3,7 @@ var https = require('https');
 
   console.log('her1');
 
-module.exports = function(searches) {
+module.exports = function(searches, callback) {
   var options = {   
   host : 'stream.twitter.com',   
     path : '/1.1/statuses/filter.json?track='+encodeURI(searches.join(',')),
@@ -14,12 +14,20 @@ module.exports = function(searches) {
   };
   var request = https.request(options,function(response) {   
     response.on('data',function(chunk){
-      console.log('h1');
+      var cache = null;
       try{
+
+        if(cache){
+          chunk = chunk+chunk;
+          cache = null;
+        }
+        console.log('in try');
         var tweet = JSON.parse(chunk);  
+        callback(null, tweet);
         console.log(tweet.text);  
       }catch(e) {
-
+        console.log('ERROR', e, chunk);
+        cache = chunk;
       }
     });  
   });  
