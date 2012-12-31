@@ -45,19 +45,21 @@ var stream = require('./stream.js')([
     'complaint escalated'
 ], function(error, tweet) {
 	console.log('follow', tweet.user.screen_name + ' - ' + tweet.text);
-	setTimeout(function() {	
-		try {
-			redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
-			twitterAuth.api.friendships.create(
-				{ screen_name: tweet.user.screen_name, follow: true }, 
-				{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
-				function(error, data) {
-					console.log('done1');
-			});			
-		}catch(e) {
-			console.log(e);
-		} 
-	}, 3000);
+	redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
+
+	// setTimeout(function() {	
+	// 	try {
+	// 		redis.hmset('user:'+tweet.user.screen_name, 'followed', +new Date(), 'tweet', tweet.text);
+	// 		twitterAuth.api.friendships.create(
+	// 			{ screen_name: tweet.user.screen_name, follow: true }, 
+	// 			{ token: CONFIG.twitter.token, secret: CONFIG.twitter.secret }, 
+	// 			function(error, data) {
+	// 				console.log('done1');
+	// 		});			
+	// 	}catch(e) {
+	// 		console.log(e);
+	// 	} 
+	// }, 3000);
 
 });
 
